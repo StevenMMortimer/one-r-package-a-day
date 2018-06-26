@@ -13,8 +13,6 @@ dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 if __name__ == "__main__":
-    #twitter = TwitterAPI()
-    #twitter.tweet("Hello world!")
 
     api = TwitterAPI(consumer_key=environ['TWITTER_CONSUMER_KEY'],
                      consumer_secret=environ['TWITTER_CONSUMER_SECRET'],
@@ -52,13 +50,13 @@ if __name__ == "__main__":
     name_len = len(selected_pkg.iloc[0]['name'])
     desc_len = len(selected_pkg.iloc[0]['description'])
     prepped_name = selected_pkg.iloc[0]['name']
-    if desc_len <= (280-4-23-name_len):
-        prepped_desc = selected_pkg.iloc[0]['description'][0:(280-4-23-name_len)]
+    if desc_len <= (280-3-23-8-name_len):
+        prepped_desc = selected_pkg.iloc[0]['description'][0:desc_len]
     else:
-        prepped_desc = selected_pkg.iloc[0]['description'][0:(280-7-23-name_len)] + "..."
+        prepped_desc = selected_pkg.iloc[0]['description'][0:(280-6-23-8-name_len)] + "..."
 
-    TWEET_TEXT = prepped_name + " - " + prepped_desc + " " + selected_pkg.iloc[0]['github_url']
-    print(prepped_name + " - " + prepped_desc + " " + selected_pkg.iloc[0]['github_url'])
+    TWEET_TEXT = prepped_name + " - " + prepped_desc + " #rstats " + selected_pkg.iloc[0]['github_url']
+    print(TWEET_TEXT)
 
     #TWEET_TEXT = "Hello World!"
     r = api.request('statuses/update', {'status': TWEET_TEXT})
