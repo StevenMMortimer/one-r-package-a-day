@@ -60,6 +60,6 @@ if __name__ == "__main__":
     TWEET_TEXT = prepped_name + " - " + prepped_desc + " " + selected_pkg.iloc[0]['github_url']
     print(prepped_name + " - " + prepped_desc + " " + selected_pkg.iloc[0]['github_url'])
 
-    TWEET_TEXT = "Hello World!"
+    #TWEET_TEXT = "Hello World!"
     r = api.request('statuses/update', {'status': TWEET_TEXT})
     print('SUCCESS' if r.status_code == 200 else 'PROBLEM: ' + r.text)
