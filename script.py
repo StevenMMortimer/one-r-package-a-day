@@ -26,7 +26,7 @@ if __name__ == "__main__":
                          'statuses/user_timeline',
                          {'screen_name': SCREEN_NAME, 'count': 100})
 
-    previous_pks = ['ggplot2']
+    previous_pks = []
     for item in pager.get_iterator(wait=3.5):
         if 'text' in item:
             this_pkg = sub("^(\w+) - (.*)", "\\1", item['text'])
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     prev_df = pandas.DataFrame({'name': previous_pks})
     prev_df.set_index('name')
 
-    url = "https://gist.githubusercontent.com/StevenMMortimer/1b4b626d3d91240a77f969ae04b37114/raw/d3aad753350dbd96b23751988fd884cdd5e8f074/r-package-star-download-data.csv"
+    url = "https://raw.githubusercontent.com/StevenMMortimer/one-r-package-a-day/master/r-package-star-download-data.csv"
     all_df = pandas.read_csv(url)
     all_df.set_index('name')
 
@@ -50,15 +50,16 @@ if __name__ == "__main__":
 
     selected_pkg = filtered_df.sample(1)
     name_len = len(selected_pkg.iloc[0]['name'])
-    desc_len = len(selected_pkg.iloc[0]['author'])
+    desc_len = len(selected_pkg.iloc[0]['description'])
     prepped_name = selected_pkg.iloc[0]['name']
     if desc_len <= (280-4-23-name_len):
-        prepped_desc = selected_pkg.iloc[0]['author'][0:(280-4-23-name_len)]
+        prepped_desc = selected_pkg.iloc[0]['description'][0:(280-4-23-name_len)]
     else:
-        prepped_desc = selected_pkg.iloc[0]['author'][0:(280-7-23-name_len)] + "..."
+        prepped_desc = selected_pkg.iloc[0]['description'][0:(280-7-23-name_len)] + "..."
 
+    TWEET_TEXT = prepped_name + " - " + prepped_desc + " " + selected_pkg.iloc[0]['github_url']
     print(prepped_name + " - " + prepped_desc + " " + selected_pkg.iloc[0]['github_url'])
 
-#    TWEET_TEXT = "Hello World!"
-#    r = api.request('statuses/update', {'status': TWEET_TEXT})
-#    print('SUCCESS' if r.status_code == 200 else 'PROBLEM: ' + r.text)
+    TWEET_TEXT = "Hello World!"
+    r = api.request('statuses/update', {'status': TWEET_TEXT})
+    print('SUCCESS' if r.status_code == 200 else 'PROBLEM: ' + r.text)
