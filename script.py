@@ -6,37 +6,43 @@ from re import sub
 import pandas
 from TwitterAPI import TwitterAPI, TwitterPager
 
-# Create .env file path.
+# create .env file path
 dotenv_path = join(dirname(__file__), '.env')
 
-# Load file from the path.
+# load file from the path
 load_dotenv(dotenv_path)
 
 if __name__ == "__main__":
 
+    # connect to api
     api = TwitterAPI(consumer_key=environ['TWITTER_CONSUMER_KEY'],
                      consumer_secret=environ['TWITTER_CONSUMER_SECRET'],
                      access_token_key=environ['TWITTER_ACCESS_TOKEN'],
                      access_token_secret=environ['TWITTER_ACCESS_TOKEN_SECRET'])
 
+    # scrape all prior tweets to check which packages I've already tweeted about
     SCREEN_NAME = 'RLangPackage'
     pager = TwitterPager(api,
                          'statuses/user_timeline',
                          {'screen_name': SCREEN_NAME, 'count': 100})
 
+    # parse out the package name that occurs before the hyphen at the beginning
     previous_pks = []
     for item in pager.get_iterator(wait=3.5):
         if 'text' in item:
             this_pkg = sub("^(\w+) - (.*)", "\\1", item['text'])
             previous_pks.append(this_pkg)
 
+    # convert the package names to a dataframe
     prev_df = pandas.DataFrame({'name': previous_pks})
     prev_df.set_index('name')
 
+    # load the data I've compiled on R packages
     url = "https://raw.githubusercontent.com/StevenMMortimer/one-r-package-a-day/master/r-package-star-download-data.csv"
     all_df = pandas.read_csv(url)
     all_df.set_index('name')
 
+    # do an "anti join" to throw away previously tweeted rows
     all_df = pandas.merge(all_df, prev_df, how='outer', indicator=True)
     all_df = all_df[all_df['_merge'] == 'left_only']
 
@@ -46,18 +52,24 @@ if __name__ == "__main__":
     filtered_df = filtered_df[filtered_df['downloads'].notnull()]
     filtered_df = filtered_df[filtered_df['downloads'].between(5000, 1000000)]
 
+    # randomly select one of the remaining rows
     selected_pkg = filtered_df.sample(1)
+
+    # pull out the name and description to see if we need to truncate because of Twitters 280 character limit
     name_len = len(selected_pkg.iloc[0]['name'])
     desc_len = len(selected_pkg.iloc[0]['description'])
     prepped_name = selected_pkg.iloc[0]['name']
+
+    # 280 minus 3 for " - ", then minus 23 because links are counted as such, then minus 8 for the " #rstats " hashtag
     if desc_len <= (280-3-23-8-name_len):
         prepped_desc = selected_pkg.iloc[0]['description'][0:desc_len]
     else:
         prepped_desc = selected_pkg.iloc[0]['description'][0:(280-6-23-8-name_len)] + "..."
 
+    # cobble together the tweet text
     TWEET_TEXT = prepped_name + " - " + prepped_desc + " #rstats " + selected_pkg.iloc[0]['github_url']
     print(TWEET_TEXT)
 
-    #TWEET_TEXT = "Hello World!"
+    # tweet it out to the world!
     r = api.request('statuses/update', {'status': TWEET_TEXT})
     print('SUCCESS' if r.status_code == 200 else 'PROBLEM: ' + r.text)
