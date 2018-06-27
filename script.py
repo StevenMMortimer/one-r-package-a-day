@@ -56,15 +56,18 @@ if __name__ == "__main__":
     selected_pkg = filtered_df.sample(1)
 
     # pull out the name and description to see if we need to truncate because of Twitters 280 character limit
-    name_len = len(selected_pkg.iloc[0]['name'])
-    desc_len = len(selected_pkg.iloc[0]['description'])
     prepped_name = selected_pkg.iloc[0]['name']
+    prepped_desc = sub('\s+', ' ', selected_pkg.iloc[0]['description'])
 
-    # 280 minus 3 for " - ", then minus 23 because links are counted as such, then minus 8 for the " #rstats " hashtag
-    if desc_len <= (280-3-23-8-name_len):
-        prepped_desc = selected_pkg.iloc[0]['description'][0:desc_len]
+    name_len = len(prepped_name)
+    desc_len = len(prepped_desc)
+
+    # 280 minus 3 for " - ", then minus 23 because links are counted as such,
+    # then minus 9 for the " #rstats " hashtag
+    if desc_len <= (280-3-23-9-name_len):
+        prepped_desc = prepped_desc[0:desc_len]
     else:
-        prepped_desc = selected_pkg.iloc[0]['description'][0:(280-6-23-8-name_len)] + "..."
+        prepped_desc = prepped_desc[0:(280-6-23-9-name_len)] + "..."
 
     # cobble together the tweet text
     TWEET_TEXT = prepped_name + " - " + prepped_desc + " #rstats " + selected_pkg.iloc[0]['github_url']
