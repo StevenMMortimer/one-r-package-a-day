@@ -64,6 +64,7 @@ if __name__ == "__main__":
 
     # 280 minus 3 for " - ", then minus 23 because links are counted as such,
     # then minus 9 for the " #rstats " hashtag
+    # TODO: Fix bug where any URL becomes length 23, which could put the tweet text over the char limit
     if desc_len <= (280-3-23-9-name_len):
         prepped_desc = prepped_desc[0:desc_len]
     else:
