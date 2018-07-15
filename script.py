@@ -2,7 +2,7 @@
 from os import environ
 from os.path import join, dirname
 from dotenv import load_dotenv
-from re import sub
+from re import sub, findall
 import pandas
 from TwitterAPI import TwitterAPI, TwitterPager
 
@@ -30,8 +30,11 @@ if __name__ == "__main__":
     previous_pks = []
     for item in pager.get_iterator(wait=3.5):
         if 'text' in item:
-            this_pkg = sub("^(\w+) - (.*)", "\\1", item['text'])
+            this_pkg = sub("^([A-Za-z0-9.]+) - (.*)", "\\1", item['text'])
             previous_pks.append(this_pkg)
+
+    # add packrat, it wasn't formatted correctly when it tweeted
+    previous_pks.append('packrat')
 
     # convert the package names to a dataframe
     prev_df = pandas.DataFrame({'name': previous_pks})
@@ -58,17 +61,21 @@ if __name__ == "__main__":
     # pull out the name and description to see if we need to truncate because of Twitters 280 character limit
     prepped_name = selected_pkg.iloc[0]['name']
     prepped_desc = sub('\s+', ' ', selected_pkg.iloc[0]['description'])
+    # determine how many urls are in the description since Twitter shortens or expands all URLs to 23 chars
+    urls_count = len(findall("https|http|\bwww|<www", prepped_desc))
 
     name_len = len(prepped_name)
     desc_len = len(prepped_desc)
 
-    # 280 minus 3 for " - ", then minus 23 because links are counted as such,
+    # 280 tweet char max
+    # then minus 3 for " - "
     # then minus 9 for the " #rstats " hashtag
-    # TODO: Fix bug where any URL becomes length 23, which could put the tweet text over the char limit
-    if desc_len <= (280-3-23-9-name_len):
+    # then minus the number of urls plus one github url times 23 because all links are counted as 23 chars
+    if desc_len <= (280-3-((urls_count+1)*23)-9-name_len):
         prepped_desc = prepped_desc[0:desc_len]
     else:
-        prepped_desc = prepped_desc[0:(280-6-23-9-name_len)] + "..."
+        # minus 6 instead of 3 for the added "..."
+        prepped_desc = prepped_desc[0:(280-6-((urls_count+1)*23)-9-name_len)] + "..."
 
     # cobble together the tweet text
     TWEET_TEXT = prepped_name + " - " + prepped_desc + " #rstats " + selected_pkg.iloc[0]['github_url']
