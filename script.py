@@ -7,7 +7,11 @@ import pandas
 from TwitterAPI import TwitterAPI, TwitterPager
 
 # create .env file path
-dotenv_path = join(dirname(__file__), '.env')
+try:
+    # this will fail if running interactively which will source the script from current directory
+    dotenv_path = join(dirname(__file__), '.env')
+except:
+    dotenv_path = '.env'
 
 # load file from the path
 load_dotenv(dotenv_path)
