@@ -1,14 +1,16 @@
 # script.py
+
 from os import environ
 from os.path import join, dirname
 from dotenv import load_dotenv
-from re import sub, findall
+import re
 import pandas
 from TwitterAPI import TwitterAPI, TwitterPager
 
 # create .env file path
 try:
-    # this will fail if running interactively which will source the script from current directory
+    # this will fail if running interactively which will source
+    # the script from current directory
     dotenv_path = join(dirname(__file__), '.env')
 except:
     dotenv_path = '.env'
@@ -24,7 +26,7 @@ if __name__ == "__main__":
                      access_token_key=environ['TWITTER_ACCESS_TOKEN'],
                      access_token_secret=environ['TWITTER_ACCESS_TOKEN_SECRET'])
 
-    # scrape all prior tweets to check which packages I've already tweeted about
+    # scrape all prior tweets to check which packages I've already tweeted
     SCREEN_NAME = 'RLangPackage'
     pager = TwitterPager(api,
                          'statuses/user_timeline',
@@ -34,7 +36,7 @@ if __name__ == "__main__":
     previous_pks = []
     for item in pager.get_iterator(wait=3.5):
         if 'text' in item:
-            this_pkg = sub("^([A-Za-z0-9.]+) - (.*)", "\\1", item['text'])
+            this_pkg = re.sub("^([A-Za-z0-9.]+) - (.*)", "\\1", item['text'])
             previous_pks.append(this_pkg)
 
     # add packrat, it wasn't formatted correctly when it tweeted
@@ -55,34 +57,43 @@ if __name__ == "__main__":
 
     # focus on packages in middle ground of downloads and stars
     filtered_df = all_df[all_df['stars'].notnull()]
-    filtered_df = filtered_df[filtered_df['stars'].between(10,1000)]
+    filtered_df = filtered_df[filtered_df['stars'].between(10, 1000)]
     filtered_df = filtered_df[filtered_df['downloads'].notnull()]
     filtered_df = filtered_df[filtered_df['downloads'].between(5000, 1000000)]
 
     # randomly select one of the remaining rows
     selected_pkg = filtered_df.sample(1)
 
-    # pull out the name and description to see if we need to truncate because of Twitters 280 character limit
+    # pull out the name and description to see if we need
+    # to truncate because of Twitter's 280 character limit
     prepped_name = selected_pkg.iloc[0]['name']
-    prepped_desc = sub('\s+', ' ', selected_pkg.iloc[0]['description'])
-    # determine how many urls are in the description since Twitter shortens or expands all URLs to 23 chars
-    urls_count = len(findall("https|http|\bwww|<www", prepped_desc))
+    prepped_desc = re.sub(r'\s+', ' ',
+                          selected_pkg.iloc[0]['description']).strip()
+    # determine how many urls are in the description
+    # since Twitter shortens or expands all URLs to 23 chars
+    urls_count = len(re.findall("https|http|\bwww|<www", prepped_desc))
 
     name_len = len(prepped_name)
     desc_len = len(prepped_desc)
 
+    # determine the max length of the description
     # 280 tweet char max
     # then minus 3 for " - "
     # then minus 9 for the " #rstats " hashtag
-    # then minus the number of urls plus one github url times 23 because all links are counted as 23 chars
-    if desc_len <= (280-3-((urls_count+1)*23)-9-name_len):
+    # then minus the number of urls plus one github url
+    # times 23 because all links are counted as 23 chars
+    max_len = (280 - 3 - ((urls_count + 1) * 23) - 9 - name_len)
+
+    # truncate the description to the max length if needed
+    if desc_len <= max_len:
         prepped_desc = prepped_desc[0:desc_len]
     else:
-        # minus 6 instead of 3 for the added "..."
-        prepped_desc = prepped_desc[0:(280-6-((urls_count+1)*23)-9-name_len)] + "..."
+        # minus extra 3 for the added "..."
+        prepped_desc = prepped_desc[0:(max_len - 3)] + "..."
 
     # cobble together the tweet text
-    TWEET_TEXT = prepped_name + " - " + prepped_desc + " #rstats " + selected_pkg.iloc[0]['github_url']
+    TWEET_TEXT = prepped_name + " - " + prepped_desc + \
+        " #rstats " + selected_pkg.iloc[0]['github_url']
     print(TWEET_TEXT)
 
     # tweet it out to the world!
