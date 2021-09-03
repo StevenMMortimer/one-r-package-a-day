@@ -47,7 +47,7 @@ if __name__ == "__main__":
     prev_df.set_index('name')
 
     # load the data I've compiled on R packages
-    url = "https://raw.githubusercontent.com/StevenMMortimer/one-r-package-a-day/91363acfddd2d36a13e2609cbc04b13123b0f6da/r-package-star-download-data.csv"
+    url = "https://raw.githubusercontent.com/StevenMMortimer/one-r-package-a-day/6d90b5e4b6c461c8f2fdbe466ced8f86605a2992/r-package-star-download-data.csv"
     all_df = pandas.read_csv(url)
     all_df.set_index('name')
 
@@ -56,10 +56,10 @@ if __name__ == "__main__":
     all_df = all_df[all_df['_merge'] == 'left_only']
 
     # focus on packages in middle ground of downloads and stars
-    filtered_df = all_df[all_df['stars'].notnull()]
-    filtered_df = filtered_df[filtered_df['stars'].between(10, 1000)]
+    filtered_df = all_df[all_df['github_url'].notnull()]
+    filtered_df = filtered_df.loc[lambda df: df.stars.notnull() | df.stars < 1000]
     filtered_df = filtered_df[filtered_df['downloads'].notnull()]
-    filtered_df = filtered_df[filtered_df['downloads'].between(5000, 1000000)]
+    filtered_df = filtered_df.loc[lambda df: df.downloads < 1000000]
 
     # randomly select one of the remaining rows
     selected_pkg = filtered_df.sample(1)
