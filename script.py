@@ -47,7 +47,7 @@ if __name__ == "__main__":
     prev_df.set_index('name')
 
     # load the data I've compiled on R packages
-    url = "https://raw.githubusercontent.com/StevenMMortimer/one-r-package-a-day/6d90b5e4b6c461c8f2fdbe466ced8f86605a2992/r-package-star-download-data.csv"
+    url = "https://raw.githubusercontent.com/StevenMMortimer/one-r-package-a-day/d94392d7abb9a7ade71c75e77c4284ad6e350969/r-package-star-download-data.csv"
     all_df = pandas.read_csv(url)
     all_df.set_index('name')
 
