@@ -2,5 +2,8 @@
 .python-version
 .vscode/
 .Rproj.user
+.RData
+.Rhistory
 .httr-oauth
 *.Rproj
+Untitled.R
